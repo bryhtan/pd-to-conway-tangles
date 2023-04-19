@@ -1,0 +1,6 @@
+Find a way to generate algebraic tangles up through 10 crossing using the rational tangle generator and Montesinos tangle generator found in the 'tanglenomicon' folder.
+
+Add all PD notations for tangles obtained from 'FindRationalTangles' and 'FindMontesinosTangles.'
+
+pdToConway is using the assumption that the PD Notation is given so that the first entry in a crossing corresponds to the SW corner, and is the entering side of the over-strand. The common resources, KnotInfo and Knot Atlas assume the first entry is the entering side of the *under-strand*.
+

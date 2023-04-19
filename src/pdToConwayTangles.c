@@ -6,7 +6,7 @@
 #include "pdToConwayTangles.h"
 /***************************************************************************************
   Authors: Isabel Darcy, Ethan Rooke, Zachary Bryhtan
-  Last Modified: 4-3-2023
+  Last Modified: 4-17-2023
   Description: This program takes the PD notation of rational knots then combines the 
     crossings to produce the knot's associated continued fraction. In the 'main' 
     function, the knot's PD notation is stored into a matrix with two additional columns
@@ -706,7 +706,7 @@ void sort(int row, int newRow, int pdCode[][7], int edge[][4]){
 }
 
 void makeCanonical(int start, int end, int pdCode[][7], int sign, int *remainder, int orientation){
-  //printf("start %d end %d orientation %d sign %d\n", start, end, orientation, sign);
+
   if(end - start > 1){
     if(sign == -1){
       printf("-");
@@ -739,7 +739,6 @@ void makeCanonical(int start, int end, int pdCode[][7], int sign, int *remainder
       } else {
         q = aModB(a, b);
         pdCode[i][4] = q;
-        //printf("remainder is %d",*remainder);
         *remainder += (a - q)/b;
       }
     }
@@ -1831,14 +1830,7 @@ void algTangle(int row, int newRow, int pdCode[][7], int edge[][4]){
       }
     }
      
-    
-    
-    /* for(int i = 0; i < newRow; i++){
-      for(int j = 0; j < 7; j++){
-        printf("%d\t", pdCode[i][j]);
-      }
-      printf("\n");
-    } */
+
     printf("N(");    
     for(int i = 0; i < k; i++){
       int mont=isMontesino(components[i], components[i+1], pdCode, 1);
@@ -1881,17 +1873,7 @@ void algTangle(int row, int newRow, int pdCode[][7], int edge[][4]){
       }
     }
     printf("],,,");
-    /*for(int i = 0; i < k; i++){
-      printf("(");
-      for(int j = components[i]; j < components[i+1]; j++){
-        getConway(pdCode[j][4], pdCode[j][5]);
-        if(j < components[i+1] - 1){
-          printf("|");
-        }
-      }
-      printf(")");
-    }
-    printf("],,,");*/
+\
   } else {
     //standard Montesinos case
     handleMontesinos(newRow, pdCode);
@@ -1904,10 +1886,11 @@ int makeHorVtangle(int TangleA, int Clock1, int Clock2, int rows, int pdCode[][7
   int TangleB = 0;
   int rotate = 0;
   int arc1, arc2, tangle2i, tangle2ii, tangle2iClock, tangle2iiClock;
-  if(pdCode[TangleA][4] != 0 && abs(pdCode[TangleA][(Clock1 % 2) + 4]) == 1){ 
+
+  if(pdCode[TangleA][4] != 0 && ( abs(pdCode[TangleA][4]) == 1 || pdCode[TangleA][5] == 1 ) ){ 
 
     TangleB = canCombine(TangleA, Clock1, Clock2, rows, pdCode, edge);
-    
+      
     if(TangleB > -1 && TangleB < TangleA){
       arc1 = pdCode[TangleA][Clock1];
       arc2 = pdCode[TangleA][Clock2];
@@ -1921,35 +1904,41 @@ int makeHorVtangle(int TangleA, int Clock1, int Clock2, int rows, int pdCode[][7
         rotate = (Clock1 + 3 - tangle2iClock) % 4;
         rotateTangle90CCW_Ntimes(rotate, TangleB, rows, pdCode, edge);
       }
-    }
+    
     //printf("Combinging TangleA = %d to TangleB = %d after rotating TangleB %d along edge %d %d\n", TangleA, TangleB, rotate, Clock1, Clock2);
-    if((Clock1 % 2) == 0 && abs(pdCode[TangleB][4]) == 1 && abs(pdCode[TangleA][4]) == 1){
-      
-      if(pdCode[TangleB][4] < 0){
-        pdCode[TangleB][4] *= -1;
-        pdCode[TangleB][5] *= -1;
-      }
-      if(pdCode[TangleA][4] < 0){
-        pdCode[TangleA][4] *= -1;
-        pdCode[TangleA][5] *= -1;
-      }
-      pdCode[TangleB][5] += pdCode[TangleA][5];
+      if((Clock1 % 2) == 0 && abs(pdCode[TangleB][4]) == 1 && abs(pdCode[TangleA][4]) == 1){
+        // Clock1 even => vertical sum, need unit numerators
+        
+        if(pdCode[TangleB][4] < 0){
+          pdCode[TangleB][4] *= -1;
+          pdCode[TangleB][5] *= -1;
+        }
+        if(pdCode[TangleA][4] < 0){
+          pdCode[TangleA][4] *= -1;
+          pdCode[TangleA][5] *= -1;
+        }
+        pdCode[TangleB][5] += pdCode[TangleA][5];
 
-      if(pdCode[TangleB][5] < 0){
-        pdCode[TangleB][4] *= -1;
-        pdCode[TangleB][5] *= -1;
-      }      
-      
-      combineTanglesPDandEdge(TangleA, TangleB, Clock1, Clock2, rows, pdCode, edge);
-      
-      return 1;
-    } else if((Clock1 % 2) == 1 && pdCode[TangleB][5] == 1 && pdCode[TangleB][5] == 1){
-      
-      pdCode[TangleB][4] += pdCode[TangleA][4];
-      combineTanglesPDandEdge(TangleA, TangleB, Clock1, Clock2, rows, pdCode, edge);
-      
-      return 1;
-    } else {
+        if(pdCode[TangleB][5] < 0){
+          pdCode[TangleB][4] *= -1;
+          pdCode[TangleB][5] *= -1;
+        }      
+        
+        combineTanglesPDandEdge(TangleA, TangleB, Clock1, Clock2, rows, pdCode, edge);
+        
+        return 1;
+      } else if((Clock1 % 2) == 1 && pdCode[TangleA][5] == 1 && pdCode[TangleB][5] == 1){
+        //Clock1 odd => horizontal sum, need denom of 1
+        pdCode[TangleB][4] += pdCode[TangleA][4];
+        
+        combineTanglesPDandEdge(TangleA, TangleB, Clock1, Clock2, rows, pdCode, edge);
+        
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+    else {
       return 0;
     }
   } else {
@@ -1958,6 +1947,9 @@ int makeHorVtangle(int TangleA, int Clock1, int Clock2, int rows, int pdCode[][7
 }
 
 int makeRationalSimple(int TangleA, int Clock1, int Clock2, int newRow, int rows, int pdCode[][7], int edge[][4]){
+  if(pdCode[TangleA][4] == 0){
+    return 0;
+  }
   int TangleB = 0;
   int rotate = 0;
   int tangle2i, tangle2ii, tangle2iClock, tangle2iiClock;
@@ -1965,54 +1957,63 @@ int makeRationalSimple(int TangleA, int Clock1, int Clock2, int newRow, int rows
   int arc2 = pdCode[TangleA][Clock2];
 
   TangleB = canCombine(TangleA, Clock1, Clock2, rows, pdCode, edge);
-
   if(TangleB > -1){
-    if(TangleB > TangleA){
-      swapTanglesAB(TangleA, TangleB, newRow, pdCode, rows, edge);
-    }
+    
     //find where arc1 and arc2 connect to TangleB to rotate if needed
     getTangle2(rows, TangleA, Clock1, &tangle2i, &tangle2iClock, pdCode, edge);
-    getTangle2(rows, TangleB, Clock2, &tangle2ii, &tangle2iiClock, pdCode, edge);
+    getTangle2(rows, TangleA, Clock2, &tangle2ii, &tangle2iiClock, pdCode, edge);
     
     if(tangle2iClock != (Clock1 + 3) % 4){
-      //Need to rotate TangleB
       rotate = (Clock1 + 3 - tangle2iClock) % 4;
       rotateTangle90CCW_Ntimes(rotate, TangleB, rows, pdCode, edge);
     }
     
     //Need to know if this is a vertical or horizontal combination
-    if( Clock1 % 2 == 1 && pdCode[TangleB][5] == 1 ){
-      //This case is a horizontal combination with horizontal tangle
+    if( Clock1 % 2 == 1 && ( pdCode[TangleB][5] == 1 || pdCode[TangleA][5] == 1 ) ){
       
+      //This case is a horizontal combination with horizontal tangle
+      int horizontal = TangleB;
+      int rational = TangleA;
+      if(pdCode[TangleB][5] != 1){
+        rational = TangleB;
+        horizontal = TangleA;
+      }
       //If TangleA has fraction a/b and TangleB has fraction n/1
       //Write a = a'b + r, then a/b + n/1 = r/b + a' + n 
       // = (r + b(a' + n)) / b  is the resulting fraction
       // a' is the same as floor(a/b) and r is the same as a modulo b 
-      int a = pdCode[TangleA][4];
-      int b = pdCode[TangleA][5];
-      int n = pdCode[TangleB][4];
+      
+      int a = pdCode[rational][4];
+      int b = pdCode[rational][5];
+      int n = pdCode[horizontal][4];
 
       pdCode[TangleB][4] = a + b*n;
       pdCode[TangleB][5] = b;
       
       combineTanglesPDandEdge(TangleA, TangleB, Clock1, Clock2, rows, pdCode, edge);
-
-      return 1;
-    } else if( Clock1 % 2 == 0 && abs(pdCode[TangleB][4]) == 1 ) {
-      //This case is vertical combination with vertical tangle
       
+      return 1;
+    } else if( Clock1 % 2 == 0 && ( abs(pdCode[TangleB][4]) == 1 || abs(pdCode[TangleA][4]) == 1 ) ) {
+      //This case is vertical combination with vertical tangle
+      int rational = TangleA;
+      int vertical = TangleB;
+
+      if( abs(pdCode[TangleB][4]) != 1){
+       rational = TangleB;
+       vertical  = TangleA; 
+      }
       //Push negative to denominator if needed
-      if(pdCode[TangleB][4] < 0){
-        pdCode[TangleB][4] *= -1;
-        pdCode[TangleB][5] *= -1;
+      if(pdCode[vertical][4] < 0){
+        pdCode[vertical][4] *= -1;
+        pdCode[vertical][5] *= -1;
       }
       
       //If TangleA has fraction a/b and TangleB has fraction 1/n
       //Resulting  fraction is 1/ (n + 1/(a/b)) = 1/(n + b/a) 
       // or a/( a*n + b )
-      int a = pdCode[TangleA][4];
-      int b = pdCode[TangleA][5];
-      int n = pdCode[TangleB][5];
+      int a = pdCode[rational][4];
+      int b = pdCode[rational][5];
+      int n = pdCode[vertical][5];
 
       pdCode[TangleB][4] = a;
       pdCode[TangleB][5] = a*n + b;
@@ -2022,7 +2023,6 @@ int makeRationalSimple(int TangleA, int Clock1, int Clock2, int newRow, int rows
         pdCode[TangleB][5] *= -1;
       }
       combineTanglesPDandEdge(TangleA, TangleB, Clock1, Clock2, rows, pdCode, edge);
-
       return 1;
     } else {
       return 0;
@@ -2063,33 +2063,36 @@ void pdToConway(int row, int pdCode[][7]){
   int canADD,arc1, arc2, tangle2i, tangle2ii, tangle2iClock, tangle2iiClock;
   int added = 1;
 
+  //MAKING A VERTIC SUM INTO HORIZONTAL FRAC. ROWS 1 AND 3 MAKE -1/2 NOT -2/1
   while (added > 0){
+    added = 0;
+    Tangle = row - 1;
     //make simple by adding basic
-    for(int i = 0; i < 4; i++){
-      added = 0;
-      Tangle = row - 1;
-      while (Tangle > 0){
-        added += makeHorVtangle(Tangle, i, (i + 1) % 4, row, pdCode, edge);
-        Tangle--;
+    while(Tangle > 0){
+      for(int i = 0; i < 4; i++){
+        added +=makeHorVtangle(Tangle, i, (i + 1) % 4, row, pdCode, edge);
       }
+      Tangle--;
     }
   }
   
-  newRow = removeTangles(row, pdCode, edge, row);
+  
 
+  newRow = removeTangles(row, pdCode, edge, row);
   added = 1;
 
   while(added > 0){
     //make rationals by adding simple
-    for(int i = 0; i < 4; i++){
-      added = 0;
-      Tangle = newRow - 1;
-      while(Tangle > 0){
+    Tangle = newRow - 1;
+    added = 0;
+    while(Tangle > 0){      
+      for(int i = 0; i < 4; i++){
         added += makeRationalSimple(Tangle, i, (i + 1) % 4, newRow, row, pdCode, edge);
-        Tangle--;
       }
+      Tangle--;
     }
   }
+  
   newRow = removeTangles(row, pdCode, edge, newRow);
   
   if(newRow == 2){
